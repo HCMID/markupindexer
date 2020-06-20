@@ -25,6 +25,8 @@ lazy val crossed = crossProject(JSPlatform, JVMPlatform).in(file(".")).
         "org.wvlet.airframe" %%% "airframe-log" % "20.5.2",
         "edu.holycross.shot.cite" %%% "xcite" % "4.3.0",
         "edu.holycross.shot" %%% "ohco2" % "10.19.0",
+        "edu.holycross.shot" %%% "citerelations" % "2.7.0",
+        "edu.holycross.shot" %%% "scm" % "7.3.0",
 
       )
     ).jvmSettings(
