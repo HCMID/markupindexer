@@ -4,6 +4,8 @@ import edu.holycross.shot.ohco2._
 import edu.holycross.shot.citerelation._
 import edu.holycross.shot.scm._
 
+import scala.annotation.tailrec
+
 import scala.scalajs.js.annotation._
 
 /** A class capable of reading marked up archival
@@ -11,10 +13,8 @@ import scala.scalajs.js.annotation._
 */
 trait MidMarkupIndexer {
 
-
+  // Verb of triples in this index
   def verb: Cite2Urn
-
-
 
   /**  Given a  citable node in archival
   * format, create the corresponding
@@ -24,9 +24,25 @@ trait MidMarkupIndexer {
   */
   def indexedNode(cn: CitableNode): Set[CiteTriple]
 
-  def indexedCorpus(c: Corpus): Set[CiteTriple] = Set.empty[CiteTriple]
 
-  def indexedLibrary(lib: CiteLibrary): CiteRelationSet = CiteRelationSet(Set.empty[CiteTriple])
+  @tailrec private def sumTriples(tripleSets: Vector[Set[CiteTriple]], resultSet: Set[CiteTriple] = Set.empty[CiteTriple]): Set[CiteTriple] = {
+    if (tripleSets.isEmpty) {
+      resultSet
+    } else {
+      sumTriples(tripleSets.tail, resultSet ++ tripleSets.head)
+    }
+  }
+
+  def indexedCorpus(c: Corpus): Set[CiteTriple] = {
+    val indexedNodes = c.nodes.map(n => indexedNode(n))
+    sumTriples(indexedNodes)
+
+  }
+
+  def indexedLibrary(lib: CiteLibrary): CiteRelationSet = {
+    val tripleSet = indexedCorpus(lib.textRepository.get.corpus)
+    CiteRelationSet(tripleSet)
+  }
 
 
 
