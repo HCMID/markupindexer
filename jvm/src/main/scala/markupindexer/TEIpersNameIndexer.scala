@@ -9,7 +9,7 @@ import scala.xml._
 
 
 object TEIpersNameIndexer extends MidMarkupIndexer {
-  
+
   def verb = Cite2Urn("urn:cite2:cite:verbs.v1:appearsIn")
   def indexedNode(cn: CitableNode): Set[CiteTriple] = Set.empty[CiteTriple]
 }
