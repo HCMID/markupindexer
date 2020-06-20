@@ -7,14 +7,16 @@ import edu.holycross.shot.scm._
 import edu.holycross.shot.xmlutils._
 import scala.xml._
 
+import wvlet.log._
+
 import scala.annotation.tailrec
 
-object TEIpersNameIndexer extends MidMarkupIndexer {
+object TEIpersNameIndexer extends MidMarkupIndexer  with LogSupport {
 
   def verb = Cite2Urn("urn:cite2:cite:verbs.v1:appearsIn")
 
   def indexedNames(context: CtsUrn, n: xml.Node, names: Vector[IndexedName] = Vector.empty[IndexedName]) : Vector[IndexedName]= {
-    n match {
+    val newNameList : Vector[IndexedName] = n match {
       case t: xml.Text =>  {
         names
       }
@@ -22,39 +24,46 @@ object TEIpersNameIndexer extends MidMarkupIndexer {
       case e: xml.Elem =>  {
         e.label match {
           case "persName" => {
-            println("FOUND ONE! ")
             try {
               val urn = e.attribute("n").head.text
-              // CHANGE TO USE COLLECT TEXT FORM XML UTILS
               val persName = TextReader.collectText(e)
-              println("it's " + urn + " " + persName)
+              debug("found " + urn + " " + persName)
               val indexedName = IndexedName(context, Cite2Urn(urn), persName)
               val augmented = names :+ indexedName
-              println("RETURN AUG " + augmented)
+              debug("augmented list " + augmented)
               augmented
 
             } catch {
               case t: Throwable => {
-                println("FAILED on " + e)
+                debug("FAILED on " + e)
                 names
               }
             }
             // get urn, get text, create IndexedName
-            names
+
           }
           case _ => {
-            for (ch <- e.child) {
+            val collected = for (ch <- e.child) yield {
               indexedNames(context, ch, names)
             }
+            debug("COLLECTED: " + collected.flatten)
+            collected.toVector.flatten
           }
         }
       }
      }
-     names
+     debug("newNameList now " + newNameList)
+     newNameList
+  }
+
+  // Triple is person, verb, text
+  def nameToTriple(indexedName: IndexedName): CiteTriple = {
+    CiteTriple(indexedName.person, verb, indexedName.passage)
   }
 
   def indexedNode(cn: CitableNode): Set[CiteTriple] = {
     val root = XML.loadString(cn.text)
-    Set.empty[CiteTriple]
+    val nameSet = indexedNames(cn.urn, root)
+    nameSet.toVector.map(n => nameToTriple(n)).toSet
   }
 }
